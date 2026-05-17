@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - CarbonTracker</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="dashboard-page">
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" style="position: fixed; inset: 0; background: rgba(255,255,255,0.8); z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 15px;">
+        <i class="fas fa-leaf fa-spin" style="font-size: 3rem; color: var(--primary);"></i>
+        <p style="font-weight: 600; color: var(--primary-dark);">Loading your eco-data...</p>
+    </div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-logo">
+            <i class="fas fa-leaf"></i> CarbonTracker
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-item active" onclick="showPanel('overview')">
+                <i class="fas fa-th-large"></i> Overview
+            </div>
+            <div class="nav-item" onclick="showPanel('track')">
+                <i class="fas fa-plus-circle"></i> Track Emission
+            </div>
+            <div class="nav-item" onclick="showPanel('history')">
+                <i class="fas fa-history"></i> History
+            </div>
+        </nav>
+        
+        <div class="nav-item" onclick="toggleDarkMode()" style="margin-top: auto;">
+            <i class="fas fa-moon" id="darkIcon"></i> Dark Mode
+        </div>
+        <div class="nav-item" onclick="logoutUser()">
+            <i class="fas fa-sign-out-alt"></i> Logout
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Dashboard Header -->
+        <header class="dashboard-header">
+            <div>
+                <h1>Welcome, <span id="userName">User</span>! <span style="font-size: 1.5rem">🌱</span></h1>
+                <p class="text-muted" id="userQuote">Small steps lead to big changes.</p>
+            </div>
+            <div class="user-profile-group">
+                <div class="user-info-text" style="text-align: right; margin-right: 15px;">
+                    <p id="userEmail" style="font-size: 0.8rem; font-weight: 600;"></p>
+                    <p class="text-muted" style="font-size: 0.75rem;">Impact Member</p>
+                </div>
+                <div class="profile-img-container" style="position: relative;">
+                    <img id="userAvatar" src="https://ui-avatars.com/api/?name=User&background=2d6a4f&color=fff" alt="User Avatar" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 3px solid var(--accent);">
+                    <div class="online-indicator" style="position: absolute; bottom: 2px; right: 2px; width: 12px; height: 12px; background: #4cc9f0; border: 2px solid white; border-radius: 50%;"></div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Overview Panel -->
+        <div id="overviewPanel" class="panel">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h4>Total CO2 (kg)</h4>
+                    <div class="value" id="totalCo2">0.00</div>
+                </div>
+                <div class="stat-card">
+                    <h4>Commute Impact</h4>
+                    <div class="value" id="transportCo2">0.00</div>
+                </div>
+                <div class="stat-card">
+                    <h4>Home Energy</h4>
+                    <div class="value" id="energyCo2">0.00</div>
+                </div>
+                <div class="stat-card">
+                    <h4>Waste Impact</h4>
+                    <div class="value" id="wasteCo2">0.00</div>
+                </div>
+            </div>
+
+            <div class="charts-grid">
+                <div class="chart-container">
+                    <h3>Emissions Breakdown (Pie Chart)</h3>
+                    <div style="height: 300px;">
+                        <canvas id="pieChart"></canvas>
+                    </div>
+                </div>
+                <div class="suggestions-panel" id="suggestionsBox">
+                    <h3><i class="fas fa-lightbulb"></i> Eco Tips</h3>
+                    <div id="suggestionsList">
+                        <p>No data yet. Start tracking to get ideas!</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-container" style="margin-bottom: 40px;">
+                <h3>Emissions Trend (Last 10 Entries)</h3>
+                <div style="height: 350px;">
+                    <canvas id="barChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Track Emission Panel -->
+        <div id="trackPanel" class="panel" style="display: none;">
+            <div class="chart-container" style="max-width: 600px; margin: 0 auto;">
+                <h2>Calculate New Footprint</h2>
+                <form id="trackForm" onsubmit="saveEmission(event)" style="margin-top: 25px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div class="form-group">
+                            <label>Distance (km)</label>
+                            <input type="number" step="0.1" name="distance" placeholder="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Vehicle Type</label>
+                            <select name="vehicle_type">
+                                <option value="petrol_car">Petrol Car</option>
+                                <option value="diesel_car">Diesel Car</option>
+                                <option value="bike">Bike</option>
+                                <option value="bus">Bus</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Electricity Usage (Units/kWh)</label>
+                        <input type="number" step="0.1" name="electricity_units" placeholder="0" required>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div class="form-group">
+                            <label>Fuel Consumed (Liters)</label>
+                            <input type="number" step="0.1" name="liters" placeholder="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Fuel Type</label>
+                            <select name="fuel_type">
+                                <option value="petrol">Petrol</option>
+                                <option value="diesel">Diesel</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Waste Generated (kg)</label>
+                        <input type="number" step="0.1" name="waste_kg" placeholder="0" required>
+                    </div>
+                    <button type="submit" class="btn-primary" style="width: 100%;">Save Activity</button>
+                    <p id="saveStatus" style="margin-top: 15px; text-align: center; display: none;"></p>
+                </form>
+            </div>
+        </div>
+
+        <!-- History Panel -->
+        <div id="historyPanel" class="panel" style="display: none;">
+            <div class="table-container">
+                <h2>Activity History</h2>
+                <table style="margin-top: 20px;">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Total CO2</th>
+                            <th>Transport</th>
+                            <th>Energy</th>
+                            <th>Waste</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyTable">
+                        <!-- History rows will go here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    
+    <script src="auth.js"></script>
+    <script src="charts.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

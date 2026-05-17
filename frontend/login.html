@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login/Signup - CarbonTracker</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="auth-page">
+    <div class="auth-container">
+        <div class="text-center" style="margin-bottom: 30px;">
+            <a href="index.html" class="logo" style="justify-content: center;">
+                <i class="fas fa-leaf"></i> CarbonTracker
+            </a>
+        </div>
+
+        <div class="auth-tabs">
+            <div class="auth-tab active" id="loginTab" onclick="switchTab('login')">Login</div>
+            <div class="auth-tab" id="signupTab" onclick="switchTab('signup')">Sign Up</div>
+        </div>
+
+        <form id="authForm" onsubmit="handleAuth(event)">
+            <div class="form-group" id="nameGroup" style="display: none;">
+                <label for="name">Full Name</label>
+                <input type="text" id="name" placeholder="John Doe">
+            </div>
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" required placeholder="name@example.com">
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" required placeholder="Min 6 characters">
+            </div>
+            <button type="submit" class="btn-primary" id="authBtn" style="width: 100%;">Login</button>
+        </form>
+
+        <div class="divider">
+            <span>OR</span>
+        </div>
+
+        <button onclick="loginWithGoogle()" class="btn-google">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/02-01-google-s.png" alt="Google">
+            Continue with Google
+        </button>
+
+        <p id="errorMsg" style="color: var(--danger); font-size: 0.85rem; margin-top: 15px; display: none; text-align: center;"></p>
+    </div>
+
+    <!-- Firebase Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    
+    <script src="auth.js"></script>
+    <script>
+        // Tab switching logic
+        function switchTab(mode) {
+            const loginTab = document.getElementById('loginTab');
+            const signupTab = document.getElementById('signupTab');
+            const nameGroup = document.getElementById('nameGroup');
+            const authBtn = document.getElementById('authBtn');
+
+            if (mode === 'login') {
+                loginTab.classList.add('active');
+                signupTab.classList.remove('active');
+                nameGroup.style.display = 'none';
+                authBtn.innerText = 'Login';
+                document.getElementById('name').required = false;
+            } else {
+                loginTab.classList.remove('active');
+                signupTab.classList.add('active');
+                nameGroup.style.display = 'block';
+                authBtn.innerText = 'Create Account';
+                document.getElementById('name').required = true;
+            }
+        }
+
+        // Handle initial mode from URL
+        window.onload = () => {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('mode') === 'signup') {
+                switchTab('signup');
+            }
+        };
+    </script>
+</body>
+</html>

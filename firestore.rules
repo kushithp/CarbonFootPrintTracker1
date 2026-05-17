@@ -1,0 +1,125 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: /users/{userId}
+    // Document ID: {userId} (matches auth.uid)
+    // Fields:
+    //   - uid: string (required)
+    //   - email: string (required)
+    //   - displayName: string (optional)
+    //   - photoURL: string (optional)
+    //   - createdAt: timestamp (optional)
+    //
+    // Collection: /users/{userId}/footprints/{footprintId}
+    // Document ID: auto-generated
+    // Fields:
+    //   - uid: string (required, must match owner)
+    //   - date: string (required, YYYY-MM-DD)
+    //   - distance: number (required)
+    //   - units: number (required)
+    //   - liters: number (required)
+    //   - kg: number (required)
+    //   - total: number (required)
+    //   - breakdown: map (required)
+    //   - createdAt: timestamp (required)
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function isValidDateString(dateStr) {
+      return dateStr is string && dateStr.matches("^\\d{4}-\\d{2}-\\d{2}$");
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          (request.auth.token.email == "24b51.kushith@sjec.ac.in" && request.auth.token.email_verified == true));
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    function isValidUser(data) {
+      return data.uid == request.auth.uid &&
+             data.email is string && isValidEmail(data.email) &&
+             (!('displayName' in data) || (data.displayName is string && data.displayName.size() < 100)) &&
+             (!('photoURL' in data) || (data.photoURL is string && data.photoURL.size() < 500));
+    }
+
+    function isValidFootprint(data) {
+      let allowedFields = ['uid', 'date', 'distance', 'units', 'liters', 'kg', 'total', 'breakdown', 'details', 'createdAt'];
+      let allowedBreakdown = ['transport', 'electricity', 'fuel', 'waste'];
+      let allowedDetails = ['vehicleType', 'fuelType', 'distance', 'units', 'liters', 'kg'];
+      
+      return data.keys().hasOnly(allowedFields) &&
+             data.uid == request.auth.uid &&
+             isValidDateString(data.date) &&
+             data.distance is number && data.distance >= 0 &&
+             data.units is number && data.units >= 0 &&
+             data.liters is number && data.liters >= 0 &&
+             data.kg is number && data.kg >= 0 &&
+             data.total is number && data.total >= 0 &&
+             data.breakdown is map &&
+             data.breakdown.keys().hasOnly(allowedBreakdown) &&
+             (!('details' in data) || (
+               data.details is map &&
+               data.details.keys().hasOnly(allowedDetails) &&
+               data.details.vehicleType is string && data.details.vehicleType.size() < 50 &&
+               data.details.fuelType is string && data.details.fuelType.size() < 50 &&
+               data.details.distance is number &&
+               data.details.units is number &&
+               data.details.liters is number &&
+               data.details.kg is number
+             )) &&
+             data.createdAt is timestamp;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId) && isValidUser(request.resource.data);
+      allow update: if isOwner(userId) && isValidUser(request.resource.data) && 
+                    request.resource.data.uid == resource.data.uid;
+
+      match /footprints/{footprintId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow create: if isOwner(userId) && isValidFootprint(request.resource.data);
+        allow update: if isOwner(userId) && isValidFootprint(request.resource.data) &&
+                      request.resource.data.uid == resource.data.uid;
+        allow delete: if isOwner(userId) || isAdmin();
+      }
+    }
+
+    // Deny all other access
+    match /{path=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile and settings",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email"]
+    },
+    "Footprint": {
+      "title": "Footprint",
+      "description": "Daily carbon footprint record",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "distance": { "type": "number" },
+        "units": { "type": "number" },
+        "liters": { "type": "number" },
+        "kg": { "type": "number" },
+        "total": { "type": "number" },
+        "breakdown": {
+          "type": "object",
+          "properties": {
+            "transport": { "type": "number" },
+            "electricity": { "type": "number" },
+            "fuel": { "type": "number" },
+            "waste": { "type": "number" }
+          }
+        },
+        "details": {
+          "type": "object",
+          "properties": {
+            "vehicleType": { "type": "string" },
+            "fuelType": { "type": "string" },
+            "distance": { "type": "number" },
+            "units": { "type": "number" },
+            "liters": { "type": "number" },
+            "kg": { "type": "number" }
+          }
+        },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "date", "total"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile document"
+    },
+    "/users/{userId}/footprints/{footprintId}": {
+      "schema": "Footprint",
+      "description": "User's daily footprint records"
+    }
+  }
+}
