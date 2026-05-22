@@ -10,4 +10,22 @@ const db = knex({
   searchPath: ['knex', 'public'],
 });
 
+// Auto-initialize schema to ensure the password column exists
+async function initializeSchema() {
+  try {
+    const hasPassword = await db.schema.hasColumn('users', 'password');
+    if (!hasPassword) {
+      await db.schema.alterTable('users', (table) => {
+        table.string('password', 255);
+      });
+      console.log('Schema: Successfully added "password" column to "users" table.');
+    }
+  } catch (error) {
+    console.warn('Schema Warning: Could not auto-add "password" column, it may already exist or DB is currently offline:', error.message);
+  }
+}
+
+// Run schema setup
+initializeSchema();
+
 export default db;
