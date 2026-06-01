@@ -2,5 +2,5 @@
   "name": "Carbon Footprint Tracker",
   "description": "A modern full-stack application to track and visualize your daily carbon footprint with personalized eco-friendly suggestions.",
   "requestFramePermissions": [],
-  "majorCapabilities": []
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

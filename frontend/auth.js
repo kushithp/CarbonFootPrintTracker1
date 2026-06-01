@@ -9,13 +9,30 @@ class CustomAuth {
     }
 
     init() {
-        const stored = localStorage.getItem('eco_user');
-        if (stored) {
-            try {
-                this.currentUser = JSON.parse(stored);
-            } catch (e) {
-                this.currentUser = null;
+        let stored = localStorage.getItem('eco_user');
+        if (!stored) {
+            // Redirect to login.html if they are trying to access dashboard directly without a session
+            const path = window.location.pathname;
+            if (path.includes('dashboard.html') || path === '/' || path.endsWith('/')) {
+                window.location.href = 'login.html';
+                return;
             }
+            
+            // Generate a persistent guest user identity so tracking works right away for other sections
+            const guestUid = 'guest_' + Math.random().toString(36).substring(2, 11) + Date.now().toString(36);
+            const guestUser = {
+                uid: guestUid,
+                displayName: 'Eco Guest',
+                email: 'guest@carbontracker.com',
+                photoURL: 'https://ui-avatars.com/api/?name=Eco+Guest&background=2d6a4f&color=fff'
+            };
+            localStorage.setItem('eco_user', JSON.stringify(guestUser));
+            stored = JSON.stringify(guestUser);
+        }
+        try {
+            this.currentUser = JSON.parse(stored);
+        } catch (e) {
+            this.currentUser = null;
         }
         this.initialized = true;
         // Run listeners on next tick to mimic async state matching
@@ -94,12 +111,8 @@ const auth = new CustomAuth();
 auth.onAuthStateChanged(user => {
     const path = window.location.pathname;
     if (user) {
-        if (path.includes('login.html') || path.endsWith('/') || path.includes('index.html')) {
+        if (path.includes('login.html')) {
             window.location.href = 'dashboard.html';
-        }
-    } else {
-        if (path.includes('dashboard.html')) {
-            window.location.href = 'login.html';
         }
     }
 });

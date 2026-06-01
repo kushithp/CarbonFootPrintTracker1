@@ -32,13 +32,15 @@ router.post('/signup', async (req, res) => {
     const defaultPhotoURL = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=2d6a4f&color=fff`;
 
     // 3. Insert user into Database
-    const [newUser] = await db('users').insert({
+    await db('users').insert({
       firebase_uid: customUid,
       email: email.toLowerCase(),
       name,
       password: hashedPassword,
       photo_url: defaultPhotoURL
-    }).returning('*');
+    });
+
+    const newUser = await db('users').where({ firebase_uid: customUid }).first();
 
     res.json({
       success: true,
@@ -105,13 +107,13 @@ router.post('/sync', async (req, res) => {
     let user = await db('users').where({ firebase_uid }).first();
     
     if (!user) {
-      const [newUser] = await db('users').insert({
+      await db('users').insert({
         firebase_uid,
         email,
         name,
         photo_url
-      }).returning('*');
-      user = newUser;
+      });
+      user = await db('users').where({ firebase_uid }).first();
     } else {
       // Update data if changed
       await db('users').where({ firebase_uid }).update({

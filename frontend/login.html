@@ -3,16 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login/Signup - CarbonTracker</title>
+    <title>Login / Sign Up - CarbonTracker</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="auth-page">
+    <!-- Theme Toggle Floating Button -->
+    <button class="theme-toggle-floating" onclick="toggleDarkMode()" aria-label="Toggle dark mode">
+        <i class="fas fa-moon" id="themeIcon"></i>
+    </button>
+
     <div class="auth-container">
-        <div class="text-center" style="margin-bottom: 30px;">
-            <a href="index.html" class="logo" style="justify-content: center;">
-                <i class="fas fa-leaf"></i> CarbonTracker
-            </a>
+        <div class="text-center" style="margin-bottom: 24px; text-align: center;">
+            <div class="logo" style="justify-content: center; display: inline-flex; align-items: center; gap: 8px; font-size: 1.8rem; font-weight: 800; color: var(--primary);">
+                <i class="fas fa-leaf" style="font-size: 1.6rem;"></i> <span>Carbon<span style="color: var(--text)">Tracker</span></span>
+            </div>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 8px;">Step towards restoring our planet 🌿</p>
         </div>
 
         <div class="auth-tabs">
@@ -21,32 +27,74 @@
         </div>
 
         <form id="authForm" onsubmit="handleAuth(event)">
+            <!-- Full Name (Only for signup) -->
             <div class="form-group" id="nameGroup" style="display: none;">
                 <label for="name">Full Name</label>
-                <input type="text" id="name" placeholder="John Doe">
+                <div class="input-with-icon">
+                    <i class="fas fa-user input-icon"></i>
+                    <input type="text" id="name" placeholder="John Doe">
+                </div>
             </div>
+
+            <!-- Email -->
             <div class="form-group">
                 <label for="email">Email Address</label>
-                <input type="email" id="email" required placeholder="name@example.com">
+                <div class="input-with-icon">
+                    <i class="fas fa-envelope input-icon"></i>
+                    <input type="email" id="email" required placeholder="name@example.com">
+                </div>
             </div>
-            <div class="form-group">
+
+            <!-- Password -->
+            <div class="form-group" style="margin-bottom: 24px;">
                 <label for="password">Password</label>
-                <input type="password" id="password" required placeholder="Min 6 characters">
+                <div class="input-with-icon">
+                    <i class="fas fa-lock input-icon"></i>
+                    <input type="password" id="password" required placeholder="At least 6 characters">
+                </div>
             </div>
-            <button type="submit" class="btn-primary" id="authBtn" style="width: 100%;">Login</button>
+
+            <button type="submit" class="btn-primary" id="authBtn" style="width: 100%; justify-content: center; padding: 14px;">
+                Login
+            </button>
         </form>
 
-        <p id="errorMsg" style="color: var(--danger); font-size: 0.85rem; margin-top: 15px; display: none; text-align: center;"></p>
+        <p id="errorMsg" style="color: var(--danger); font-size: 0.85rem; margin-top: 15px; display: none; text-align: center; background: var(--danger-light); padding: 10px; border-radius: 8px; font-weight: 600;"></p>
+
+        <div class="auth-footer" style="text-align: center; margin-top: 24px; border-top: 1px dashed var(--border); padding-top: 16px;">
+            <a href="dashboard.html" onclick="useGuest(event)" style="color: var(--primary); text-decoration: none; font-size: 0.9rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; transition: color 0.2s;">
+                <span>Continue as Guest</span> <i class="fas fa-arrow-right" style="font-size: 0.8rem;"></i>
+            </a>
+        </div>
     </div>
 
     <script src="auth.js"></script>
     <script>
+        // Set up dark mode initially
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.body.classList.add('dark');
+            const themeIcon = document.getElementById('themeIcon');
+            if (themeIcon) themeIcon.className = 'fas fa-sun';
+        }
+
+        function toggleDarkMode() {
+            const isDark = document.body.classList.toggle('dark');
+            localStorage.setItem('darkMode', isDark);
+            const themeIcon = document.getElementById('themeIcon');
+            if (themeIcon) {
+                themeIcon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+            }
+        }
+
         // Tab switching logic
         function switchTab(mode) {
             const loginTab = document.getElementById('loginTab');
             const signupTab = document.getElementById('signupTab');
             const nameGroup = document.getElementById('nameGroup');
             const authBtn = document.getElementById('authBtn');
+            const errorMsg = document.getElementById('errorMsg');
+
+            errorMsg.style.display = 'none';
 
             if (mode === 'login') {
                 loginTab.classList.add('active');
@@ -63,13 +111,28 @@
             }
         }
 
-        // Handle initial mode from URL
+        // Failsafe for url-based state
         window.onload = () => {
             const params = new URLSearchParams(window.location.search);
             if (params.get('mode') === 'signup') {
                 switchTab('signup');
             }
         };
+
+        // Guest logic
+        function useGuest(event) {
+            event.preventDefault();
+            // Generate and set up the guest user so the dashboard recognizes the session
+            const guestUid = 'guest_' + Math.random().toString(36).substring(2, 11) + Date.now().toString(36);
+            const guestUser = {
+                uid: guestUid,
+                displayName: 'Eco Guest',
+                email: 'guest@carbontracker.com',
+                photoURL: 'https://ui-avatars.com/api/?name=Eco+Guest&background=2d6a4f&color=fff'
+            };
+            localStorage.setItem('eco_user', JSON.stringify(guestUser));
+            window.location.href = 'dashboard.html';
+        }
     </script>
 </body>
 </html>

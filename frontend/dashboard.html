@@ -5,37 +5,55 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - CarbonTracker</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Load FontAwesome and Inter + JetBrains Mono Fonts -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="dashboard-page">
     <!-- Loading Overlay -->
-    <div id="loadingOverlay" style="position: fixed; inset: 0; background: rgba(255,255,255,0.8); z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 15px;">
-        <i class="fas fa-leaf fa-spin" style="font-size: 3rem; color: var(--primary);"></i>
-        <p style="font-weight: 600; color: var(--primary-dark);">Loading your eco-data...</p>
+    <div id="loadingOverlay" class="glass-loader">
+        <div class="loader-content">
+            <div class="leaf-wrapper">
+                <i class="fas fa-leaf fa-spin loader-icon"></i>
+            </div>
+            <p class="loader-text">Loading CarbonTracker...</p>
+        </div>
     </div>
 
     <!-- Sidebar -->
     <aside class="sidebar">
         <div class="sidebar-logo">
-            <i class="fas fa-leaf"></i> CarbonTracker
+            <div class="logo-icon-box">
+                <i class="fas fa-leaf"></i>
+            </div>
+            <span class="logo-text">Carbon<span class="highlight">Tracker</span></span>
         </div>
+        
+        <div class="sidebar-divider"></div>
+
         <nav class="sidebar-nav">
             <div class="nav-item active" onclick="showPanel('overview')">
-                <i class="fas fa-th-large"></i> Overview
+                <div class="nav-icon-wrapper"><i class="fas fa-chart-pie"></i></div>
+                <span>Overview</span>
             </div>
             <div class="nav-item" onclick="showPanel('track')">
-                <i class="fas fa-plus-circle"></i> Track Emission
+                <div class="nav-icon-wrapper"><i class="fas fa-plus"></i></div>
+                <span>Track Emission</span>
             </div>
             <div class="nav-item" onclick="showPanel('history')">
-                <i class="fas fa-history"></i> History
+                <div class="nav-icon-wrapper"><i class="fas fa-clock-rotate-left"></i></div>
+                <span>History</span>
+            </div>
+            <div class="nav-item" id="authNavBtn" onclick="handleNavAuthClick()" style="margin-top: 15px; border-top: 1px dashed var(--border-light); padding-top: 15px;">
+                <div class="nav-icon-wrapper"><i class="fas fa-sign-in-alt" id="authNavIcon"></i></div>
+                <span id="authNavText">Sign In</span>
             </div>
         </nav>
         
-        <div class="nav-item" onclick="toggleDarkMode()" style="margin-top: auto;">
-            <i class="fas fa-moon" id="darkIcon"></i> Dark Mode
-        </div>
-        <div class="nav-item" onclick="logoutUser()">
-            <i class="fas fa-sign-out-alt"></i> Logout
+        <div class="sidebar-footer">
+            <div class="nav-item theme-toggle-btn" onclick="toggleDarkMode()">
+                <div class="nav-icon-wrapper"><i class="fas fa-moon" id="darkIcon"></i></div>
+                <span>Dark Mode</span>
+            </div>
         </div>
     </aside>
 
@@ -43,108 +61,309 @@
     <main class="main-content">
         <!-- Dashboard Header -->
         <header class="dashboard-header">
-            <div>
-                <h1>Welcome, <span id="userName">User</span>! <span style="font-size: 1.5rem">🌱</span></h1>
-                <p class="text-muted" id="userQuote">Small steps lead to big changes.</p>
+            <div class="header-left">
+                <span class="header-tag">Overview & Analytics</span>
+                <h1>Welcome, <span id="userName">User</span>! <span class="wave-emoji">🌱</span></h1>
+                <p id="userQuote" class="header-subtitle">Small steps lead to big changes.</p>
             </div>
-            <div class="user-profile-group">
-                <div class="user-info-text" style="text-align: right; margin-right: 15px;">
-                    <p id="userEmail" style="font-size: 0.8rem; font-weight: 600;"></p>
-                    <p class="text-muted" style="font-size: 0.75rem;">Impact Member</p>
+            <div class="header-right">
+                <div class="date-widget" id="dateWidget">
+                    <i class="far fa-calendar"></i>
+                    <span id="headerDate">May 17, 2026</span>
                 </div>
-                <div class="profile-img-container" style="position: relative;">
-                    <img id="userAvatar" src="https://ui-avatars.com/api/?name=User&background=2d6a4f&color=fff" alt="User Avatar" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 3px solid var(--accent);">
-                    <div class="online-indicator" style="position: absolute; bottom: 2px; right: 2px; width: 12px; height: 12px; background: #4cc9f0; border: 2px solid white; border-radius: 50%;"></div>
+                <div class="user-profile-group">
+                    <div class="user-info-text">
+                        <p id="userEmail" class="profile-email"></p>
+                        <p class="profile-role">Impact Leader</p>
+                    </div>
+                    <div class="profile-img-container">
+                        <img id="userAvatar" src="https://ui-avatars.com/api/?name=User&background=2d6a4f&color=fff" alt="User Avatar">
+                        <div class="online-indicator"></div>
+                    </div>
                 </div>
             </div>
         </header>
 
         <!-- Overview Panel -->
         <div id="overviewPanel" class="panel">
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <h4>Total CO2 (kg)</h4>
-                    <div class="value" id="totalCo2">0.00</div>
+            <!-- Advanced Top Metric Widgets Row -->
+            <div class="analytics-widgets-grid">
+                <!-- Widget 1: Carbon Index & Planet Condition -->
+                <div class="widget-card status-indicator-widget" id="carbonLevelCard">
+                    <div class="widget-header">
+                        <div class="widget-icon-box"><i class="fas fa-tree"></i></div>
+                        <h3>Carbon Index Level</h3>
+                    </div>
+                    <div class="widget-body">
+                        <div class="level-indicator-display">
+                            <span class="level-badge" id="carbonLevelBadge">Normal ⚠️</span>
+                            <span class="status-subtitle" id="carbonStatusText">Moderate</span>
+                        </div>
+                        <div class="planet-condition-box">
+                            <div class="condition-header">
+                                <span>Planet Condition:</span>
+                                <strong id="planetConditionValue">Stressed ☁️</strong>
+                            </div>
+                            <div class="progress-bar-container">
+                                <div class="progress-bar-fill" id="planetConditionProgress" style="width: 70%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="widget-footer">
+                        <span id="latestLogDate">Latest log: --</span>
+                    </div>
                 </div>
-                <div class="stat-card">
-                    <h4>Commute Impact</h4>
-                    <div class="value" id="transportCo2">0.00</div>
+
+                <!-- Widget 2: Circular Eco Score Gauge -->
+                <div class="widget-card eco-score-widget">
+                    <div class="widget-header">
+                        <div class="widget-icon-box"><i class="fas fa-leaf"></i></div>
+                        <h3>Eco Score Index</h3>
+                    </div>
+                    <div class="widget-body gauge-body">
+                        <div class="gauge-wrapper">
+                            <svg class="progress-ring" width="120" height="120">
+                                <circle class="progress-ring__circle-bg" stroke="var(--border-light)" stroke-width="10" fill="transparent" r="50" cx="60" cy="60" />
+                                <circle id="ecoScoreRing" class="progress-ring__circle" stroke="var(--primary)" stroke-width="10" stroke-linecap="round" fill="transparent" r="50" cx="60" cy="60" />
+                            </svg>
+                            <div class="gauge-value" id="ecoScoreVal">100</div>
+                        </div>
+                        <div class="percentage-subtext">
+                            <p><strong>Score: <span id="ecoScoreStatus">Excellent</span></strong></p>
+                            <p class="stat-desc">Calculated environmental sustainability score</p>
+                        </div>
+                    </div>
                 </div>
-                <div class="stat-card">
-                    <h4>Home Energy</h4>
-                    <div class="value" id="energyCo2">0.00</div>
-                </div>
-                <div class="stat-card">
-                    <h4>Waste Impact</h4>
-                    <div class="value" id="wasteCo2">0.00</div>
+
+                <!-- Widget 3: Smart Comparison & Trend -->
+                <div class="widget-card comparison-widget">
+                    <div class="widget-header">
+                        <div class="widget-icon-box"><i class="fas fa-scale-balanced"></i></div>
+                        <h3>Smart Comparisons</h3>
+                    </div>
+                    <div class="widget-body">
+                        <div class="comparison-header-status">
+                            <span class="trend-badge-pill" id="trendBadge">
+                                <i class="fas fa-arrow-trend-down"></i>
+                                <span id="trendBadgeText">Decreasing</span>
+                            </span>
+                        </div>
+                        <ul class="comparison-metrics-list">
+                            <li>
+                                <i class="fas fa-circle-user text-primary"></i>
+                                <span id="comparisonHumanText">Comparing user emissions vs typical human...</span>
+                            </li>
+                            <li>
+                                <i class="fas fa-repeat text-info"></i>
+                                <span id="comparisonPrevText">Computing previous record change...</span>
+                            </li>
+                            <li>
+                                <i class="fas fa-calendar-check text-warning"></i>
+                                <span id="comparisonWeeklyText">Comparing with your weekly average...</span>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
             </div>
 
-            <div class="charts-grid">
-                <div class="chart-container">
-                    <h3>Emissions Breakdown (Pie Chart)</h3>
-                    <div style="height: 300px;">
+            <!-- Main Interactive Section: Breakdown Categories vs Suggestions Panel -->
+            <div class="grid-sub-overview">
+                <!-- Daily Emission Summary panel -->
+                <div class="widget-card daily-summary-widget">
+                    <div class="card-title-group">
+                        <div class="card-accent-tag"></div>
+                        <h3>Daily Emission Category Summary <span class="trend-subtext">(All logs total)</span></h3>
+                    </div>
+                    
+                    <div class="emission-breakdown-subgrid">
+                        <div class="category-summary-box commute-box">
+                            <div class="box-header">
+                                <i class="fas fa-car-side icon-commute"></i>
+                                <span>Commuting</span>
+                            </div>
+                            <div class="box-value"><span id="transportCo2">0.00</span> <span class="unit-text">kg</span></div>
+                            <div class="progress-bar-container"><div class="progress-bar-fill fill-commute" id="commuteProgress" style="width: 0%;"></div></div>
+                        </div>
+                        
+                        <div class="category-summary-box electricity-box">
+                            <div class="box-header">
+                                <i class="fas fa-bolt icon-electricity"></i>
+                                <span>Electricity</span>
+                            </div>
+                            <div class="box-value"><span id="energyCo2">0.00</span> <span class="unit-text">kg</span></div>
+                            <div class="progress-bar-container"><div class="progress-bar-fill fill-electricity" id="electricityProgress" style="width: 0%;"></div></div>
+                        </div>
+
+                        <div class="category-summary-box fuel-box">
+                            <div class="box-header">
+                                <i class="fas fa-gas-pump icon-fuel"></i>
+                                <span>Heating Fuel</span>
+                            </div>
+                            <div class="box-value"><span id="fuelCo2">0.00</span> <span class="unit-text">kg</span></div>
+                            <div class="progress-bar-container"><div class="progress-bar-fill fill-fuel" id="fuelProgress" style="width: 0%;"></div></div>
+                        </div>
+
+                        <div class="category-summary-box waste-box">
+                            <div class="box-header">
+                                <i class="fas fa-trash-can icon-waste"></i>
+                                <span>Waste</span>
+                            </div>
+                            <div class="box-value"><span id="wasteCo2">0.00</span> <span class="unit-text">kg</span></div>
+                            <div class="progress-bar-container"><div class="progress-bar-fill fill-waste" id="wasteProgress" style="width: 0%;"></div></div>
+                        </div>
+                    </div>
+                    
+                    <div class="summary-total-footer">
+                        <span>Combined Lifetime Carbon Output:</span>
+                        <h2><span id="totalCo2">0.00</span> <span class="unit-text">kg CO₂</span></h2>
+                    </div>
+                </div>
+
+                <!-- Smart Suggestions Panel -->
+                <div class="suggestions-panel" id="suggestionsBox">
+                    <div class="suggestions-header">
+                        <div class="icon-bulb"><i class="fas fa-lightbulb"></i></div>
+                        <h3>Smart Suggestions Engine</h3>
+                    </div>
+                    <div class="suggestions-divider"></div>
+                    <div id="suggestionsList" class="suggestions-list">
+                        <div class="empty-state">
+                            <i class="fas fa-spa"></i>
+                            <p>No data yet. Start tracking to receive dynamic environmental recommendations.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Visualization Grid: Category shares and Weekly averages comparison -->
+            <div class="charts-grid shadow-dashboard">
+                <div class="chart-container py-4">
+                    <div class="card-title-group">
+                        <div class="card-accent-tag"></div>
+                        <h3>Emission Distribution <span class="trend-subtext">(Pie Chart)</span></h3>
+                    </div>
+                    <div class="chart-wrapper pie-chart-wrapper">
                         <canvas id="pieChart"></canvas>
                     </div>
                 </div>
-                <div class="suggestions-panel" id="suggestionsBox">
-                    <h3><i class="fas fa-lightbulb"></i> Eco Tips</h3>
-                    <div id="suggestionsList">
-                        <p>No data yet. Start tracking to get ideas!</p>
+                
+                <div class="chart-container py-4">
+                    <div class="card-title-group">
+                        <div class="card-accent-tag"></div>
+                        <h3>Weekly Comparison Chart <span class="trend-subtext">(User vs Daily Baseline)</span></h3>
+                    </div>
+                    <div class="chart-wrapper bar-chart-wrapper">
+                        <canvas id="barChart"></canvas>
                     </div>
                 </div>
             </div>
 
-            <div class="chart-container" style="margin-bottom: 40px;">
-                <h3>Emissions Trend (Last 10 Entries)</h3>
-                <div style="height: 350px;">
-                    <canvas id="barChart"></canvas>
+            <!-- Full width line graph trend -->
+            <div class="chart-container bottom-chart-container trend-line-container">
+                <div class="card-title-group">
+                    <div class="card-accent-tag"></div>
+                    <h3>Carbon & Eco Score Trends over Time <span class="trend-subtext">(History Timeline Graph)</span></h3>
+                </div>
+                <div class="chart-wrapper line-chart-wrapper">
+                    <canvas id="lineChart"></canvas>
                 </div>
             </div>
         </div>
 
         <!-- Track Emission Panel -->
         <div id="trackPanel" class="panel" style="display: none;">
-            <div class="chart-container" style="max-width: 600px; margin: 0 auto;">
-                <h2>Calculate New Footprint</h2>
-                <form id="trackForm" onsubmit="saveEmission(event)" style="margin-top: 25px;">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                        <div class="form-group">
-                            <label>Distance (km)</label>
-                            <input type="number" step="0.1" name="distance" placeholder="0" required>
+            <div class="calculator-container">
+                <div class="card-title-group">
+                    <div class="card-accent-tag"></div>
+                    <h2>Calculate New Footprint</h2>
+                </div>
+                <p class="calculator-subtitle">Input your day-to-day metrics below to estimate your equivalent carbon emissions.</p>
+
+                <form id="trackForm" onsubmit="saveEmission(event)">
+                    <!-- Section 1: Travel -->
+                    <div class="form-section">
+                        <div class="section-title">
+                            <i class="fas fa-bicycle section-icon"></i>
+                            <span>1. Travel & Commute</span>
                         </div>
-                        <div class="form-group">
-                            <label>Vehicle Type</label>
-                            <select name="vehicle_type">
-                                <option value="petrol_car">Petrol Car</option>
-                                <option value="diesel_car">Diesel Car</option>
-                                <option value="bike">Bike</option>
-                                <option value="bus">Bus</option>
-                            </select>
+                        <div class="form-grid-pair">
+                            <div class="form-group">
+                                <label>Distance Traveled <span class="label-unit">(km)</span></label>
+                                <div class="input-with-icon">
+                                    <i class="fas fa-route input-icon"></i>
+                                    <input type="number" step="0.1" name="distance" placeholder="0.0" required>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Vehicle Class</label>
+                                <div class="input-with-icon">
+                                    <i class="fas fa-car input-icon"></i>
+                                    <select name="vehicle_type">
+                                        <option value="petrol_car">Petrol Car</option>
+                                        <option value="diesel_car">Diesel Car</option>
+                                        <option value="bike">Bike / Motorcycle</option>
+                                        <option value="bus">Public Bus</option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label>Electricity Usage (Units/kWh)</label>
-                        <input type="number" step="0.1" name="electricity_units" placeholder="0" required>
+
+                    <!-- Section 2: Utilities & Fuel -->
+                    <div class="form-section">
+                        <div class="section-title">
+                            <i class="fas fa-solar-panel section-icon"></i>
+                            <span>2. Grid Electricity & Heating</span>
+                        </div>
+                        <div class="form-group full-width-group">
+                            <label>Electricity Usage <span class="label-unit">(Units/kWh)</span></label>
+                            <div class="input-with-icon">
+                                <i class="fas fa-plug-circle-bolt input-icon"></i>
+                                <input type="number" step="0.1" name="electricity_units" placeholder="0.0" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-grid-pair">
+                            <div class="form-group">
+                                <label>Heating Fuel Consumed <span class="label-unit">(Liters)</span></label>
+                                <div class="input-with-icon">
+                                    <i class="fas fa-gas-pump input-icon"></i>
+                                    <input type="number" step="0.1" name="liters" placeholder="0.0" required>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Fuel Type</label>
+                                <div class="input-with-icon">
+                                    <i class="fas fa-fire input-icon"></i>
+                                    <select name="fuel_type">
+                                        <option value="petrol">Petrol (Gasoline)</option>
+                                        <option value="diesel">Diesel Fuel</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                        <div class="form-group">
-                            <label>Fuel Consumed (Liters)</label>
-                            <input type="number" step="0.1" name="liters" placeholder="0" required>
+
+                    <!-- Section 3: Waste -->
+                    <div class="form-section">
+                        <div class="section-title">
+                            <i class="fas fa-dumpster section-icon"></i>
+                            <span>3. Waste & Consumables</span>
                         </div>
                         <div class="form-group">
-                            <label>Fuel Type</label>
-                            <select name="fuel_type">
-                                <option value="petrol">Petrol</option>
-                                <option value="diesel">Diesel</option>
-                            </select>
+                            <label>Waste Generated <span class="label-unit">(kg)</span></label>
+                            <div class="input-with-icon">
+                                <i class="fas fa-trash-arrow-up input-icon"></i>
+                                <input type="number" step="0.1" name="waste_kg" placeholder="0.0" required>
+                            </div>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label>Waste Generated (kg)</label>
-                        <input type="number" step="0.1" name="waste_kg" placeholder="0" required>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary submit-activity-btn">
+                            <i class="fas fa-calculator"></i> Save & Log Activity
+                        </button>
                     </div>
-                    <button type="submit" class="btn-primary" style="width: 100%;">Save Activity</button>
                     <p id="saveStatus" style="margin-top: 15px; text-align: center; display: none;"></p>
                 </form>
             </div>
@@ -153,21 +372,29 @@
         <!-- History Panel -->
         <div id="historyPanel" class="panel" style="display: none;">
             <div class="table-container">
-                <h2>Activity History</h2>
-                <table style="margin-top: 20px;">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Total CO2</th>
-                            <th>Transport</th>
-                            <th>Energy</th>
-                            <th>Waste</th>
-                        </tr>
-                    </thead>
-                    <tbody id="historyTable">
-                        <!-- History rows will go here -->
-                    </tbody>
-                </table>
+                <div class="table-header-flex">
+                    <div class="card-title-group">
+                        <div class="card-accent-tag"></div>
+                        <h2>Tracked Footprint Logs</h2>
+                    </div>
+                </div>
+                
+                <div class="responsive-table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Logged Date</th>
+                                <th class="col-highlight">Total Emissions</th>
+                                <th>Transport Share</th>
+                                <th>Electricity Share</th>
+                                <th>Waste Share</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyTable">
+                            <!-- History rows will go here -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </main>
